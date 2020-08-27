@@ -1,4 +1,5 @@
 var DEFAULT_TEXT = "apple";
+var NETWORK_DOMAIN = "ego-network.jveres.repl.co";
 
 var graph = undefined;
 var colors = ["#f0b5ff", "#93f2ab", "#f9e690", "#ffc9fc", "#c1f3ff"];
@@ -63,7 +64,7 @@ async function search(query) {
   clearGraph();
   query = query.trim().toLocaleLowerCase();
   try {
-    graph = await fetch(window.location.protocol+'//network.jveres.repl.co/s/' + encodeURIComponent(query)).then(response => response.json())
+    graph = await fetch(window.location.protocol+'//' + NETWORK_DOMAIN + '/s/' + encodeURIComponent(query)).then(response => response.json())
     drawGraph(query);
   } catch (e) {
     console.log(e);
