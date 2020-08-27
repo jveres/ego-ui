@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+	<meta name="viewport" content="width=device-width" />
+	<title>Egograph</title>
+	<script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js"></script>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/modern-css-reset/dist/reset.min.css" />
+	<link href="style.css" rel="stylesheet" type="text/css" />
+	</style>
+</head>
+
+<body>
+	<div id="app" x-data="controller()" x-init="$watch('error', (value) => {if (value) clearError();}); if (text !== DEFAULT_TEXT) $nextTick(_ => run());"
+	 x-cloak>
+		<div id="graph"></div>
+		<div id="intro" x-show="intro || loading">
+			<svg width="150" height="150" enable-background="new 0 0 64 64" height="512" viewBox="0 0 64 64" width="512" xmlns="http://www.w3.org/2000/svg">
+				<path d="m13.464 36.8c-1.05-.507-2.222-.8-3.464-.8-4.411 0-8 3.589-8 8s3.589 8 8 8c2.768 0 5.211-1.414 6.648-3.557l7.557 3.783c-.13.571-.205 1.164-.205 1.774 0 4.411 3.589 8 8 8s8-3.589 8-8c0-1.658-.507-3.199-1.375-4.478l10.619-11.103c1.332.988 2.974 1.581 4.756 1.581 4.411 0 8-3.589 8-8s-3.589-8-8-8c-1.846 0-3.542.634-4.898 1.688l-10.79-10.79c1.054-1.356 1.688-3.052 1.688-4.898 0-4.411-3.589-8-8-8s-8 3.589-8 8c0 .608.074 1.199.204 1.769l-7.092 2.584c-1.33-2.581-4.015-4.353-7.112-4.353-4.411 0-8 3.589-8 8s3.589 8 8 8c1.138 0 2.219-.242 3.2-.673l3.681 6.195zm-3.464 13.2c-3.309 0-6-2.691-6-6s2.691-6 6-6 6 2.691 6 6-2.691 6-6 6zm7.539-3.349c.293-.831.461-1.721.461-2.651 0-2.453-1.112-4.649-2.855-6.117l2.876-4.442 8.671 14.591c-.73.65-1.341 1.428-1.794 2.303zm14.461-28.651c1.846 0 3.542-.634 4.898-1.688l10.791 10.791c-.647.832-1.131 1.793-1.41 2.839l-6.282-.864c-.001-.026.003-.052.003-.078 0-4.411-3.589-8-8-8-2.768 0-5.212 1.414-6.648 3.557l-1.193-.596 4.378-6.761c1.049.507 2.221.8 3.463.8zm1 28.069v-9.139c3.25-.408 5.894-2.77 6.722-5.872l6.282.864c0 .026-.004.052-.004.078 0 1.91.674 3.663 1.795 5.04l-10.5 10.979c-1.177-1.043-2.658-1.744-4.295-1.95zm-1-23.069c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6zm-7.539 3.349c-.293.831-.461 1.721-.461 2.651 0 4.072 3.06 7.436 7 7.931v9.139c-.948.119-1.843.403-2.658.824l-9.108-15.327 3.831-5.916zm7.539 33.651c-3.309 0-6-2.691-6-6s2.691-6 6-6 6 2.691 6 6-2.691 6-6 6zm22-34c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6zm-22-22c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6zm-7.112 9.647c.489.949 1.158 1.788 1.967 2.47l-4.496 6.944-4.82-2.41c.293-.831.461-1.721.461-2.651 0-.608-.074-1.199-.204-1.769zm-20.888 4.353c0-3.309 2.691-6 6-6s6 2.691 6 6-2.691 6-6 6-6-2.691-6-6zm10.915 6.299c.67-.524 1.258-1.148 1.733-1.856l4.617 2.308-3.171 4.897z"
+				/></svg>
+		</div>
+		<div id="error" x-show="error && !(intro || loading)">
+			<p>Something went wrong ︎¯\_(ツ)_/¯</p>
+		</div>
+		<div id="search" :class="{ 'progressing': loading }">
+			<input x-ref="searchTerm" type="text" :class="{ 'faded': loading }" :disabled="loading" id="searchTerm" autocomplete="off" placeholder="Search..." @keydown.enter.prevent="run(_ => $refs.searchTerm.blur())" x-model="text">
+        <button type="submit" :class="{ 'faded': loading }" :disabled="loading" id="searchButton" @click="run()">
+          <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+            viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+            <style type="text/css">
+              .st0{fill:#95A5A6;}
+              .st1{fill:#7F8C8D;}
+              .st2{fill:#BDC3C7;}
+              .st3{fill:#ECF0F1;}
+            </style>
+            <g>
+              <rect id="XMLID_3_" x="353.2" y="284.8" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -165.2807 398.8813)" class="st0" width="91.4" height="228.4"/>            
+              <rect id="XMLID_4_" x="296.8" y="307.9" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -141.6782 342.3757)" class="st1" width="91.4" height="68.5"/>
+              <path id="XMLID_7_" class="st2" d="M59.8,59.7c-79.5,80.3-79.5,210.3,0,289.8c80.3,79.5,210.3,79.5,290.6,0s80.3-210.3,0-289.8
+                S140.1-19.9,59.8,59.7z M108.6,107.7c53.6-52.8,140.2-52.8,193.7,0c53.6,55.1,53.6,141.8,0,193.7c-53.6,52.8-140.2,52.8-193.7,0
+                C55,249.5,55,162.8,108.6,107.7z"/>
+              <circle id="XMLID_8_" class="st3" cx="203.9" cy="208.5" r="148.1"/>
+            </g>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <script type="text/javascript" src="https://visjs.github.io/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
