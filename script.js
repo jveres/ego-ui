@@ -2,6 +2,20 @@ const DEFAULT_TEXT = "apple";
 const NETWORK_DOMAIN = "ego-network.jveres.repl.co";
 const SVG_EL = document.getElementById('graph');
 
+const forceScale = d3.scaleSqrt().domain([0, 11]).range([30, 70]);
+const nodeColor = d3.scaleOrdinal(d3.schemeCategory10);
+const nodeSize = d3.scaleSqrt().domain([1, 50]).range([6, 18]);
+const labelSize = d3.scaleSqrt().domain([1, 50]).range([10, 18]);
+const linkWidth = d3.scaleSqrt().domain([1, 11]).range([1, 18]);
+
+const NODE_OPACITY = 0.8;
+const NODE_ACTIVE_OPACITY = 1.0;
+const NODE_INACTIVE_OPACITY = 0.3;
+
+const LINK_OPACITY = 0.6;
+const LINK_ACTIVE_OPACITY = 1.0;
+const LINK_INACTIVE_OPACITY = 0.3;
+
 var graph = undefined;
 
 function clearGraph() {  
@@ -13,25 +27,9 @@ function createGraph() {
   const width = SVG_EL.offsetWidth;
   const height = SVG_EL.offsetHeight;
 
-  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-  const nodeSizeScale = d3.scaleSqrt()
-    .domain([1, 50])
-    .range([5, 15]);
-  const labelSizeScale = d3.scaleSqrt()
-    .domain([1, 50])
-    .range([10, 18]);
-  const linkWidthScale = d3.scaleSqrt()
-    .domain([1, 11])
-    .range([2, 20]);
-
   const forceLink = d3.forceLink(graph.links)
     .id(d => d.id)
-    .distance(link => {
-      const scale = d3.scaleSqrt()
-        .domain([0, 11])
-        .range([30, 70]);
-      return scale(link.distance);
-    })
+    .distance(link => forceScale(link.distance))
     .strength(link => 1 / Math.min(link.source.count, link.target.count));
 
   const simulation = d3.forceSimulation(graph.nodes)
@@ -50,8 +48,8 @@ function createGraph() {
   
   svg.on("click", (e) => {
       if (e.target === svg.node()) {
-        link.style("stroke-opacity", 0.6);
-        node.style("opacity", 0.9);
+        link.style("stroke-opacity", LINK_OPACITY);
+        node.style("opacity", NODE_OPACITY);
         text.attr("display", "block");
       }
   });
@@ -61,26 +59,26 @@ function createGraph() {
   }
   
   const link = container.append("g")
-      .attr("stroke", "#999")
-      .attr("stroke-opacity", 0.6)
       .selectAll("line")
       .data(graph.links)
       .join("line")
-      .attr("stroke-width", linkWidth);
+      .attr("stroke-width", d => linkWidth(d.weight))
+      .attr("stroke", "#999")
+      .attr("stroke-opacity", LINK_OPACITY);
+
+  link.append("title").text(d => d.query);
 
   const node = container.append("g")
-      .attr("opacity", 0.9)
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2)
       .selectAll("circle")
       .data(graph.nodes)
       .join("circle")
-      .attr("r", nodeSize)
-      .attr("fill", color)
+      .attr("d", d3.symbol().type(d3.symbolCircle))
+      .attr("r", d => nodeSize(d.count))
+      .attr("fill", d => nodeColor(d.depth))
+      .attr("stroke", "#fff")
+      .attr("stroke-width", d => d.depth === 0 ? 3 : 2)
+      .style("opacity", NODE_OPACITY)
       .call(drag(simulation));
-
-  node.append("title")
-      .text(d => d.id);
   
   const text = container.append("g")
       .attr("class", "labels")
@@ -91,30 +89,30 @@ function createGraph() {
   text.append("text")
       .attr("fill", "black")
       .attr("stroke", "#fff")
-      .attr("stroke-width", 3)
+      .attr("stroke-width", 2)
       .attr("paint-order", "stroke fill")
       .attr("pointer-events", "none")
       .attr("text-anchor", "middle")
-      .attr("dy", labeldY)
+      .attr("dy", d => 2 * nodeSize(d.count) + 2.0)
       .style("font-family", "sans-serif")
-      .style("font-size", labelSize)
-      .text(function(d) { return d.id; })  
+      .style("font-size", d => labelSize(d.count))
+      .text(d => d.id);  
 
   node.on("click", (_, d) => {   
       var _nodes = [d]
       link.style('stroke-opacity', function(l) {
           if (d === l.source) {
             _nodes.push(l.target);
-            return 1.0;
+            return LINK_ACTIVE_OPACITY;
           } else if (d === l.target) {
             _nodes.push(l.source);
-            return 1.0;
+            return LINK_ACTIVE_OPACITY;
           }
-          else return 0.3;
+          else return LINK_INACTIVE_OPACITY;
       });
     
       node.style("opacity", function(n) {
-        return _nodes.indexOf(n) !== -1 ? 0.8 : 0.3;
+        return _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY;
       });
       
       text.attr("display", function(t) {
@@ -138,7 +136,6 @@ function createGraph() {
   });
 
   SVG_EL.appendChild(svg.node());
-  return svg.node();
 
   function drag(simulation) {
   
@@ -148,12 +145,12 @@ function createGraph() {
       d.fy = d.y;
     }
     
-    function dragged(event,d) {
+    function dragged(event, d) {
       d.fx = event.x;
       d.fy = event.y;
     }
     
-    function dragended(event,d) {
+    function dragended(event, d) {
       if (!event.active) simulation.alphaTarget(0);
       d.fx = null;
       d.fy = null;
@@ -163,26 +160,6 @@ function createGraph() {
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended);
-  }
-
-  function nodeSize(d) {
-    return nodeSizeScale(d.count);
-  }
-
-  function labelSize(d) {
-    return labelSizeScale(d.count);
-  }
-
-  function labeldY(d) {
-    return 2 * nodeSize(d) + 2.0
-  }
-
-  function linkWidth(d) {
-    return linkWidthScale(d.weight);
-  }
-
-  function color(d) {
-    return colorScale(d.depth);
   }
 }
 
