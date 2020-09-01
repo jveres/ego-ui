@@ -7,4 +7,4 @@ Inspired by this artice: https://medium.com/applied-data-science/the-google-vs-t
 
 This is the frontend part, the graph service is available here: https://github.com/jveres/ego-network
 
-![Sample graph](/network.jpg)
+![Sample graph](/network.png)
