@@ -36,7 +36,7 @@ function createGraph() {
       .force("link", forceLink)
       .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .alphaDecay(0.03);
+      .alphaDecay(0.02);
 
   const svg = d3.create("svg")
       .attr("viewBox", [0, 0, width, height])
@@ -140,7 +140,7 @@ function createGraph() {
   function drag(simulation) {
   
     function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
+      if (!event.active) simulation.alphaTarget(0.05).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
