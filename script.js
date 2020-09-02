@@ -36,7 +36,8 @@ function createGraph() {
       .force("link", forceLink)
       .force("charge", d3.forceManyBody())
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .alphaDecay(0.02);
+      .alphaDecay(0.05)
+      .velocityDecay(0.3);
 
   const svg = d3.create("svg")
       .attr("viewBox", [0, 0, width, height])
@@ -69,17 +70,24 @@ function createGraph() {
   link.append("title").text(d => d.query);
 
   const node = container.append("g")
-      .selectAll("circle")
-      .data(graph.nodes)
-      .join("circle")
-      .attr("d", d3.symbol().type(d3.symbolCircle))
-      .attr("r", d => nodeSize(d.count))
-      .attr("fill", d => nodeColor(d.depth))
       .attr("stroke", "#fff")
-      .attr("stroke-width", d => d.depth === 0 ? 3 : 2)
+      .attr("stroke-width", 2)
       .style("opacity", NODE_OPACITY)
+      .selectAll("g")
+      .data(graph.nodes)
+      .join("g")
       .call(drag(simulation));
-  
+
+  node.append("circle")
+      .attr("r", d => nodeSize(d.count))
+      .attr("fill", d => nodeColor(d.depth));
+
+  node.filter(d => d.depth === 0)
+      .append("circle")
+      .attr("class", "pulse")
+      .attr("stroke", d => nodeColor(d.depth))
+      .attr("r", d => nodeSize(d.count));
+
   const text = container.append("g")
       .attr("class", "labels")
       .selectAll("g")
@@ -126,13 +134,10 @@ function createGraph() {
         .attr("y1", d => d.source.y)
         .attr("x2", d => d.target.x)
         .attr("y2", d => d.target.y);
-
-    node
-        .attr("cx", d => d.x)
-        .attr("cy", d => d.y);
-   
-    text
-        .attr("transform", d => `translate(${d.x}, ${d.y})`);
+    
+    node.attr("transform", d => `translate(${d.x}, ${d.y})`);
+    
+    text.attr("transform", d => `translate(${d.x}, ${d.y})`);
   });
 
   SVG_EL.appendChild(svg.node());
@@ -140,20 +145,19 @@ function createGraph() {
   function drag(simulation) {
   
     function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.05).restart();
+      if (!event.active) simulation.alphaTarget(0.02).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
-    
+
     function dragged(event, d) {
+      simulation.restart();
       d.fx = event.x;
       d.fy = event.y;
     }
     
     function dragended(event, d) {
       if (!event.active) simulation.alphaTarget(0);
-      d.fx = null;
-      d.fy = null;
     }
     
     return d3.drag()
