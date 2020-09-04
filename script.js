@@ -16,6 +16,8 @@ const LINK_OPACITY = 0.6;
 const LINK_ACTIVE_OPACITY = 1.0;
 const LINK_INACTIVE_OPACITY = 0.3;
 
+const MAX_STRENGTH = 15;
+
 var graph = undefined;
 
 function clearGraph() {  
@@ -30,7 +32,7 @@ function createGraph() {
   const forceLink = d3.forceLink(graph.links)
     .id(d => d.id)
     .distance(link => forceScale(link.distance))
-    .strength(link => 1 / Math.min(link.source.count, link.target.count));
+    .strength(link => 1 / Math.max(MAX_STRENGTH, Math.min(link.source.count, link.target.count)));
 
   const simulation = d3.forceSimulation(graph.nodes)
       .force("link", forceLink)
@@ -72,10 +74,10 @@ function createGraph() {
   const node = container.append("g")
       .attr("stroke", "#fff")
       .attr("stroke-width", 2)
-      .style("opacity", NODE_OPACITY)
       .selectAll("g")
       .data(graph.nodes)
       .join("g")
+      .style("opacity", NODE_OPACITY)
       .call(drag(simulation));
 
   node.append("circle")
