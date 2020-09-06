@@ -189,6 +189,7 @@ async function search(query) {
     clearGraph();
     graph = await fetch(window.location.protocol+'//' + NETWORK_DOMAIN + '/s/' + encodeURIComponent(query)).then(response => response.json());
     createGraph();
+    document.title = "EgoNet · " + query;
   } catch (e) {
     console.log(e);
     return e;
