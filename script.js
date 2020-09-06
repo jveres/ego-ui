@@ -21,6 +21,8 @@ const LINK_INACTIVE_OPACITY = 0.3;
 const COLLIDE_RADIUS = 20;
 const CHARGE_DISTANCE_MIN = 20;
 const CHARGE_DISTANCE_MAX = 250;
+const ALPHA_DECAY = 0.05;
+const VELOCITY_DECAY = 0.3;
 
 var graph = undefined;
 
@@ -48,8 +50,8 @@ function createGraph() {
         .radius(COLLIDE_RADIUS)
       )
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .alphaDecay(0.05)
-      .velocityDecay(0.3);
+      .alphaDecay(ALPHA_DECAY)
+      .velocityDecay(VELOCITY_DECAY);
 
   const svg = d3.create("svg")
       .attr("viewBox", [0, 0, width, height])
