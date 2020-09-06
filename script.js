@@ -2,7 +2,7 @@ const DEFAULT_TEXT = "apple";
 const NETWORK_DOMAIN = "ego-network.jveres.repl.co";
 const SVG_EL = document.getElementById('graph');
 
-const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 70]);
+const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 50]);
 const strengthScale = d3.scaleLinear().domain([1, 50]).range([-40, -30]);
 
 const nodeColor = d3.scaleOrdinal(d3.schemeSet1);
@@ -17,6 +17,10 @@ const NODE_INACTIVE_OPACITY = 0.3;
 const LINK_OPACITY = 0.6;
 const LINK_ACTIVE_OPACITY = 1.0;
 const LINK_INACTIVE_OPACITY = 0.3;
+
+const COLLIDE_RADIUS = 20;
+const CHARGE_DISTANCE_MIN = 20;
+const CHARGE_DISTANCE_MAX = 250;
 
 var graph = undefined;
 
@@ -37,12 +41,11 @@ function createGraph() {
       .force("link", forceLink)
       .force("charge", d3.forceManyBody()
         .strength(d => -30 + strengthScale(d.count))
-        .distanceMin(20)
-        .distanceMax(250)
+        .distanceMin(CHARGE_DISTANCE_MIN)
+        .distanceMax(CHARGE_DISTANCE_MAX)
       )
       .force("collide", d3.forceCollide()
-        .strength(1)
-        .radius(10)
+        .radius(COLLIDE_RADIUS)
       )
       .force("center", d3.forceCenter(width / 2, height / 2))
       .alphaDecay(0.05)
