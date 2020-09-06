@@ -36,37 +36,37 @@ function createGraph() {
   const height = SVG_EL.offsetHeight;
 
   const forceLink = d3.forceLink(graph.links)
-      .id(d => d.id)
-      .distance(link => distanceScale(link.distance));
+    .id(d => d.id)
+    .distance(link => distanceScale(link.distance));
 
   const simulation = d3.forceSimulation(graph.nodes)
-      .force("link", forceLink)
-      .force("charge", d3.forceManyBody()
-        .strength(d => -30 + strengthScale(d.count))
-        .distanceMin(CHARGE_DISTANCE_MIN)
-        .distanceMax(CHARGE_DISTANCE_MAX)
-      )
-      .force("collide", d3.forceCollide()
-        .radius(COLLIDE_RADIUS)
-      )
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .alphaDecay(ALPHA_DECAY)
-      .velocityDecay(VELOCITY_DECAY);
+    .force("link", forceLink)
+    .force("charge", d3.forceManyBody()
+      .strength(d => -30 + strengthScale(d.count))
+      .distanceMin(CHARGE_DISTANCE_MIN)
+      .distanceMax(CHARGE_DISTANCE_MAX)
+    )
+    .force("collide", d3.forceCollide()
+      .radius(COLLIDE_RADIUS)
+    )
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .alphaDecay(ALPHA_DECAY)
+    .velocityDecay(VELOCITY_DECAY);
 
   const svg = d3.create("svg")
-      .attr("viewBox", [0, 0, width, height])
-      .call(d3.zoom()
-        .scaleExtent([1 / 3, 5])
-        .on("zoom", zoomed));
+    .attr("viewBox", [0, 0, width, height])
+    .call(d3.zoom()
+      .scaleExtent([1 / 3, 5])
+      .on("zoom", zoomed));
 
   const container = svg.append("g");
   
   svg.on("click", e => {
-      if (e.target === svg.node()) {
-        link.style("stroke-opacity", LINK_OPACITY);
-        node.style("opacity", NODE_OPACITY);
-        text.attr("display", "block");
-      }
+    if (e.target === svg.node()) {
+      link.style("stroke-opacity", LINK_OPACITY);
+      node.style("opacity", NODE_OPACITY);
+      text.attr("display", "block");
+    }
   });
 
   function zoomed({transform}) {
@@ -74,81 +74,81 @@ function createGraph() {
   }
   
   const link = container.append("g")
-      .selectAll("line")
-      .data(graph.links)
-      .join("line")
-      .attr("stroke-width", d => linkWidth(d.weight))
-      .attr("stroke", "#999")
-      .attr("stroke-opacity", LINK_OPACITY);
+    .selectAll("line")
+    .data(graph.links)
+    .join("line")
+    .attr("stroke-width", d => linkWidth(d.weight))
+    .attr("stroke", "#999")
+    .attr("stroke-opacity", LINK_OPACITY);
 
   link.append("title").text(d => d.query);
 
   const node = container.append("g")
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2)
-      .selectAll("g")
-      .data(graph.nodes)
-      .join("g")
-      .style("opacity", NODE_OPACITY)
-      .call(drag(simulation));
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 2)
+    .selectAll("g")
+    .data(graph.nodes)
+    .join("g")
+    .style("opacity", NODE_OPACITY)
+    .call(drag(simulation));
 
   node.append("circle")
-      .attr("r", d => nodeSize(d.count))
-      .attr("fill", d => nodeColor(d.depth));
+    .attr("r", d => nodeSize(d.count))
+    .attr("fill", d => nodeColor(d.depth));
 
   node.filter(d => d.depth === 0)
-      .append("circle")
-      .attr("class", "pulse")
-      .attr("stroke", d => nodeColor(d.depth))
-      .attr("r", d => nodeSize(d.count));
+    .append("circle")
+    .attr("class", "pulse")
+    .attr("stroke", d => nodeColor(d.depth))
+    .attr("r", d => nodeSize(d.count));
 
   const text = container.append("g")
-      .attr("class", "labels")
-      .selectAll("g")
-      .data(graph.nodes)
-      .enter().append("g");
+    .attr("class", "labels")
+    .selectAll("g")
+    .data(graph.nodes)
+    .enter().append("g");
 
   text.append("text")
-      .attr("fill", "black")
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2)
-      .attr("paint-order", "stroke fill")
-      .attr("pointer-events", "none")
-      .attr("text-anchor", "middle")
-      .attr("dy", d => 2 * nodeSize(d.count) + 2.0)
-      .style("font-family", "sans-serif")
-      .style("font-size", d => labelSize(d.count))
-      .text(d => d.id);  
+    .attr("fill", "black")
+    .attr("stroke", "#fff")
+    .attr("stroke-width", 2)
+    .attr("paint-order", "stroke fill")
+    .attr("pointer-events", "none")
+    .attr("text-anchor", "middle")
+    .attr("dy", d => 2 * nodeSize(d.count) + 2.0)
+    .style("font-family", "sans-serif")
+    .style("font-size", d => labelSize(d.count))
+    .text(d => d.id);  
 
   node.on("click", (_, d) => {
-      if (event.defaultPrevented) return;
-      var _nodes = [d]
-      link.style('stroke-opacity', function(l) {
-          if (d === l.source) {
-            _nodes.push(l.target);
-            return LINK_ACTIVE_OPACITY;
-          } else if (d === l.target) {
-            _nodes.push(l.source);
-            return LINK_ACTIVE_OPACITY;
-          }
-          else return LINK_INACTIVE_OPACITY;
-      });
+    if (event.defaultPrevented) return;
+    var _nodes = [d]
+    link.style('stroke-opacity', function(l) {
+      if (d === l.source) {
+        _nodes.push(l.target);
+        return LINK_ACTIVE_OPACITY;
+      } else if (d === l.target) {
+        _nodes.push(l.source);
+        return LINK_ACTIVE_OPACITY;
+      }
+      else return LINK_INACTIVE_OPACITY;
+    });
+  
+    node.style("opacity", function(n) {
+      return _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY;
+    });
     
-      node.style("opacity", function(n) {
-        return _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY;
-      });
-      
-      text.attr("display", function(t) {
-        return _nodes.indexOf(t) !== -1 ? "block": "none";
-      });
+    text.attr("display", function(t) {
+      return _nodes.indexOf(t) !== -1 ? "block": "none";
+    });
   });
 
   simulation.on("tick", () => {
     link
-        .attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
+      .attr("x1", d => d.source.x)
+      .attr("y1", d => d.source.y)
+      .attr("x2", d => d.target.x)
+      .attr("y2", d => d.target.y);
     
     node.attr("transform", d => `translate(${d.x}, ${d.y})`);
     
@@ -177,9 +177,9 @@ function createGraph() {
     }
     
     return d3.drag()
-        .on("start", dragstarted)
-        .on("drag", dragged)
-        .on("end", dragended);
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
   }
 }
 
@@ -196,10 +196,10 @@ async function search(query) {
 }
 
 function getUrlParameter(name) {
-    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    var results = regex.exec(location.search);
-    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+  name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+  var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  var results = regex.exec(location.search);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
 function controller() {
@@ -225,5 +225,5 @@ function controller() {
 }
 
 if (location.protocol !== 'https:') {
-    location.replace(`https:${location.href.substring(location.protocol.length)}`);
+  location.replace(`https:${location.href.substring(location.protocol.length)}`);
 }
