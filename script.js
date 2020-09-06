@@ -2,10 +2,12 @@ const DEFAULT_TEXT = "apple";
 const NETWORK_DOMAIN = "ego-network.jveres.repl.co";
 const SVG_EL = document.getElementById('graph');
 
-const forceScale = d3.scaleSqrt().domain([0, 11]).range([30, 70]);
-const nodeColor = d3.scaleOrdinal(d3.schemeCategory10);
+const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 70]);
+const strengthScale = d3.scaleLinear().domain([1, 50]).range([-40, -30]);
+
+const nodeColor = d3.scaleOrdinal(d3.schemeSet1);
 const nodeSize = d3.scaleSqrt().domain([1, 50]).range([6, 18]);
-const labelSize = d3.scaleSqrt().domain([1, 50]).range([10, 18]);
+const labelSize = d3.scaleSqrt().domain([1, 50]).range([9, 18]);
 const linkWidth = d3.scaleSqrt().domain([1, 11]).range([1, 18]);
 
 const NODE_OPACITY = 0.8;
@@ -15,8 +17,6 @@ const NODE_INACTIVE_OPACITY = 0.3;
 const LINK_OPACITY = 0.6;
 const LINK_ACTIVE_OPACITY = 1.0;
 const LINK_INACTIVE_OPACITY = 0.3;
-
-const MAX_STRENGTH = 15;
 
 var graph = undefined;
 
@@ -30,13 +30,20 @@ function createGraph() {
   const height = SVG_EL.offsetHeight;
 
   const forceLink = d3.forceLink(graph.links)
-    .id(d => d.id)
-    .distance(link => forceScale(link.distance))
-    .strength(link => 1 / Math.max(MAX_STRENGTH, Math.min(link.source.count, link.target.count)));
+      .id(d => d.id)
+      .distance(link => distanceScale(link.distance));
 
   const simulation = d3.forceSimulation(graph.nodes)
       .force("link", forceLink)
-      .force("charge", d3.forceManyBody())
+      .force("charge", d3.forceManyBody()
+        .strength(d => -30 + strengthScale(d.count))
+        .distanceMin(20)
+        .distanceMax(250)
+      )
+      .force("collide", d3.forceCollide()
+        .strength(1)
+        .radius(10)
+      )
       .force("center", d3.forceCenter(width / 2, height / 2))
       .alphaDecay(0.05)
       .velocityDecay(0.3);
@@ -44,12 +51,12 @@ function createGraph() {
   const svg = d3.create("svg")
       .attr("viewBox", [0, 0, width, height])
       .call(d3.zoom()
-        .scaleExtent([1 / 2, 4])
+        .scaleExtent([1 / 3, 5])
         .on("zoom", zoomed));
 
   const container = svg.append("g");
   
-  svg.on("click", (e) => {
+  svg.on("click", e => {
       if (e.target === svg.node()) {
         link.style("stroke-opacity", LINK_OPACITY);
         node.style("opacity", NODE_OPACITY);
@@ -108,7 +115,8 @@ function createGraph() {
       .style("font-size", d => labelSize(d.count))
       .text(d => d.id);  
 
-  node.on("click", (_, d) => {   
+  node.on("click", (_, d) => {
+      if (event.defaultPrevented) return;
       var _nodes = [d]
       link.style('stroke-opacity', function(l) {
           if (d === l.source) {
@@ -147,13 +155,14 @@ function createGraph() {
   function drag(simulation) {
   
     function dragstarted(event, d) {
-      if (!event.active) simulation.alphaTarget(0.02).restart();
+      if (!event.active) simulation.alphaTarget(0.01).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
 
     function dragged(event, d) {
       simulation.restart();
+      d3.select(this).raise();
       d.fx = event.x;
       d.fy = event.y;
     }
