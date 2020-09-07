@@ -24,8 +24,9 @@ const CHARGE_DISTANCE_MAX = 250;
 const ALPHA_DECAY = 0.05;
 const VELOCITY_DECAY = 0.3;
 
-var graph = undefined;
-var ngraph = undefined;
+const LONGPRESS_DURATION = 3000;
+
+var graph, ngraph;
 
 function clearGraph() {  
   SVG_EL.innerHTML = "";
@@ -122,42 +123,51 @@ function buildGraph() {
     .style("font-size", d => labelSize(d.count))
     .text(d => d.id);  
 
-  node.on("click", (event, d) => {
-    if (event.defaultPrevented) return;
-    var _nodes = [d];
-    if (event.shiftKey) {
-      // shortest path
-      var root = undefined;
-      node.filter(d => {
-        if (d.depth === 0) {
-          root = d;
-          return true;
-        }
-      });
-      const path = ngraphPath.nba(ngraph);
-      _nnodes = path.find(root.id, d.id);
-      link.style('stroke-opacity', LINK_INACTIVE_OPACITY);
-      for (var i=1; i < _nnodes.length; i++) {
-        link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i-1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i-1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
-        _nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
+  var skipNextClick = false;
+
+  node
+    .on("click", (event, d) => {
+      if (event.defaultPrevented) return;
+      if (skipNextClick === true) {
+        skipNextClick = false;
+        return;
       }
-      //_nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
-    } else {
-      // connected nodes
-      link.style('stroke-opacity', l => {
-        if (d === l.source) {
-          _nodes.push(l.target);
-          return LINK_ACTIVE_OPACITY;
-        } else if (d === l.target) {
-          _nodes.push(l.source);
-          return LINK_ACTIVE_OPACITY;
+      var _nodes = [d];
+      if (event.shiftKey) {
+        // shortest path
+        var root;
+        node.filter(d => {
+          if (d.depth === 0) {
+            root = d;
+            return true;
+          }
+        });
+        const path = ngraphPath.nba(ngraph, {
+          distance(fromNode, toNode, link) {
+          return link.data.distance;
+        }});
+        _nnodes = path.find(root.id, d.id);
+        link.style('stroke-opacity', LINK_INACTIVE_OPACITY);
+        for (var i=1; i < _nnodes.length; i++) {
+          link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i-1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i-1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
+          _nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
         }
-        else return LINK_INACTIVE_OPACITY;
-      });
-    }
-    node.style("opacity", n => _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY);
-    text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block": "none");
-  });
+      } else {
+        // connected nodes
+        link.style('stroke-opacity', l => {
+          if (d === l.source) {
+            _nodes.push(l.target);
+            return LINK_ACTIVE_OPACITY;
+          } else if (d === l.target) {
+            _nodes.push(l.source);
+            return LINK_ACTIVE_OPACITY;
+          }
+          else return LINK_INACTIVE_OPACITY;
+        });
+      }
+      node.style("opacity", n => _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY);
+      text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block": "none");
+    });
 
   simulation.on("tick", () => {
     link
@@ -173,17 +183,29 @@ function buildGraph() {
 
   SVG_EL.appendChild(svg.node());
   ngraph = createGraph();
-  graph.links.map(l => ngraph.addLink(l.source.id, l.target.id));
+  graph.links.map(l => ngraph.addLink(l.source.id, l.target.id, {distance: l.distance}));
+
+  var _time, _timer;
 
   function drag(simulation) {
   
     function dragstarted(event, d) {
+      _time = new Date();
+      _timer = setTimeout(_ => {
+        var clickEvent = new Event("click", {bubbles: true});
+        clickEvent.shiftKey = true;
+        event.sourceEvent.target.dispatchEvent(clickEvent);
+        skipNextClick = true;
+      }, LONGPRESS_DURATION);
       if (!event.active) simulation.alphaTarget(0.01).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
 
     function dragged(event, d) {
+      clearTimeout(_timer);
+      _timer = null;
+      _time = null;
       simulation.restart();
       d3.select(this).raise();
       d.fx = event.x;
@@ -191,6 +213,9 @@ function buildGraph() {
     }
     
     function dragended(event, d) {
+      clearTimeout(_timer);
+      _timer = null;
+      _time = null;
       if (!event.active) simulation.alphaTarget(0);
     }
     
