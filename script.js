@@ -2,8 +2,8 @@ const DEFAULT_TEXT = "apple";
 const NETWORK_DOMAIN = "ego-network.jveres.repl.co";
 const SVG_EL = document.getElementById('graph');
 
-const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 50]);
-const strengthScale = d3.scaleLinear().domain([1, 50]).range([-40, -30]);
+const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 60]);
+const strengthScale = d3.scaleLinear().domain([1, 50]).range([-60, -30]);
 
 const nodeColor = d3.scaleOrdinal(d3.schemeSet1);
 const nodeSize = d3.scaleSqrt().domain([1, 50]).range([6, 18]);
