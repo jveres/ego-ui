@@ -25,13 +25,15 @@ const ALPHA_DECAY = 0.05;
 const VELOCITY_DECAY = 0.3;
 
 var graph = undefined;
+var ngraph = undefined;
 
 function clearGraph() {  
   SVG_EL.innerHTML = "";
   graph = undefined;
+  ngraph = undefined;
 }
 
-function createGraph() {
+function buildGraph() {
   const width = SVG_EL.offsetWidth;
   const height = SVG_EL.offsetHeight;
 
@@ -120,27 +122,41 @@ function createGraph() {
     .style("font-size", d => labelSize(d.count))
     .text(d => d.id);  
 
-  node.on("click", (_, d) => {
+  node.on("click", (event, d) => {
     if (event.defaultPrevented) return;
-    var _nodes = [d]
-    link.style('stroke-opacity', function(l) {
-      if (d === l.source) {
-        _nodes.push(l.target);
-        return LINK_ACTIVE_OPACITY;
-      } else if (d === l.target) {
-        _nodes.push(l.source);
-        return LINK_ACTIVE_OPACITY;
+    var _nodes = [d];
+    if (event.shiftKey) {
+      // shortest path
+      var root = undefined;
+      node.filter(d => {
+        if (d.depth === 0) {
+          root = d;
+          return true;
+        }
+      });
+      const path = ngraphPath.nba(ngraph);
+      _nnodes = path.find(root.id, d.id);
+      link.style('stroke-opacity', LINK_INACTIVE_OPACITY);
+      for (var i=1; i < _nnodes.length; i++) {
+        link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i-1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i-1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
+        _nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
       }
-      else return LINK_INACTIVE_OPACITY;
-    });
-  
-    node.style("opacity", function(n) {
-      return _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY;
-    });
-    
-    text.attr("display", function(t) {
-      return _nodes.indexOf(t) !== -1 ? "block": "none";
-    });
+      //_nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
+    } else {
+      // connected nodes
+      link.style('stroke-opacity', l => {
+        if (d === l.source) {
+          _nodes.push(l.target);
+          return LINK_ACTIVE_OPACITY;
+        } else if (d === l.target) {
+          _nodes.push(l.source);
+          return LINK_ACTIVE_OPACITY;
+        }
+        else return LINK_INACTIVE_OPACITY;
+      });
+    }
+    node.style("opacity", n => _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY);
+    text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block": "none");
   });
 
   simulation.on("tick", () => {
@@ -156,6 +172,8 @@ function createGraph() {
   });
 
   SVG_EL.appendChild(svg.node());
+  ngraph = createGraph();
+  graph.links.map(l => ngraph.addLink(l.source.id, l.target.id));
 
   function drag(simulation) {
   
@@ -188,7 +206,7 @@ async function search(query) {
   try {
     clearGraph();
     graph = await fetch(window.location.protocol+'//' + NETWORK_DOMAIN + '/s/' + encodeURIComponent(query)).then(response => response.json());
-    createGraph();
+    buildGraph();
     document.title = "EgoNet · " + query;
   } catch (e) {
     console.log(e);
