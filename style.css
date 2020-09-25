@@ -1,7 +1,12 @@
-
 body {
   font-family: 'Open Sans', sans-serif;
   font-size: 18px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 #app {
@@ -40,7 +45,7 @@ body {
 #graph {
   position: absolute;
   top: 0;
-  left: 0; 
+  left: 0;
   right: 0;
   bottom: 0;
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIUlEQVQoU2NkgIIPHz78h7Gx0YxEKyRkEswgxlGF+AIcAPuiJiF0kFwTAAAAAElFTkSuQmCC) repeat;
@@ -74,7 +79,8 @@ body {
   margin: 0;
 }
 
-button, svg {
+button,
+svg {
   display: inline-block;
   vertical-align: middle;
 }
@@ -105,6 +111,7 @@ sup {
   from {
     background-position: 0 0;
   }
+
   to {
     background-position: 40px 40px;
   }
@@ -124,6 +131,7 @@ sup {
     stroke-opacity: 0.8;
     transform: scale(0.5);
   }
+
   to {
     stroke-width: 0;
     stroke-opacity: 0;
@@ -143,7 +151,7 @@ sup {
   animation-duration: 2s;
 }
 
-[x-cloak] { 
+[x-cloak] {
   display: none;
 }
 

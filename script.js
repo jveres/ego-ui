@@ -1,12 +1,12 @@
 const DEFAULT_TEXT = "apple";
-const NETWORK_DOMAIN = "ego-network.jveres.repl.co";
+const NETWORK_URL = "egonet.fly.dev/?d=4&r=11&q=";
 const SVG_EL = document.getElementById('graph');
 
 const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 60]);
 const strengthScale = d3.scaleLinear().domain([1, 50]).range([-60, -30]);
 
-const nodeColor = d3.scaleOrdinal(d3.schemeSet1);
-const nodeSize = d3.scaleSqrt().domain([1, 50]).range([6, 18]);
+const nodeColor = d3.scaleOrdinal(d3.schemeTableau10);
+const nodeSize = d3.scaleSqrt().domain([1, 50]).range([6, 20]);
 const labelSize = d3.scaleSqrt().domain([1, 50]).range([9, 18]);
 const linkWidth = d3.scaleSqrt().domain([1, 11]).range([1, 18]);
 
@@ -28,7 +28,7 @@ const LONGPRESS_DURATION = 3000;
 
 var graph, ngraph;
 
-function clearGraph() {  
+function clearGraph() {
   SVG_EL.innerHTML = "";
   graph = undefined;
   ngraph = undefined;
@@ -45,7 +45,7 @@ function buildGraph() {
   const simulation = d3.forceSimulation(graph.nodes)
     .force("link", forceLink)
     .force("charge", d3.forceManyBody()
-      .strength(d => -30 + strengthScale(d.count))
+      .strength(d => -50 + strengthScale(d.count))
       .distanceMin(CHARGE_DISTANCE_MIN)
       .distanceMax(CHARGE_DISTANCE_MAX)
     )
@@ -63,7 +63,7 @@ function buildGraph() {
       .on("zoom", zoomed));
 
   const container = svg.append("g");
-  
+
   svg.on("click", e => {
     if (e.target === svg.node()) {
       link.style("stroke-opacity", LINK_OPACITY);
@@ -72,10 +72,12 @@ function buildGraph() {
     }
   });
 
-  function zoomed({transform}) {
+  function zoomed({
+    transform
+  }) {
     container.attr("transform", transform);
   }
-  
+
   const link = container.append("g")
     .selectAll("line")
     .data(graph.links)
@@ -121,13 +123,12 @@ function buildGraph() {
     .attr("dy", d => 2 * nodeSize(d.count) + 2.0)
     .style("font-family", "sans-serif")
     .style("font-size", d => labelSize(d.count))
-    .text(d => d.id);  
+    .text(d => d.id);
 
   var skipNextClick = false;
 
   node
     .on("click", (event, d) => {
-      if (event.defaultPrevented) return;
       if (skipNextClick === true) {
         skipNextClick = false;
         return;
@@ -144,12 +145,13 @@ function buildGraph() {
         });
         const path = ngraphPath.nba(ngraph, {
           distance(fromNode, toNode, link) {
-          return link.data.distance;
-        }});
+            return link.data.distance;
+          }
+        });
         _nnodes = path.find(root.id, d.id);
         link.style('stroke-opacity', LINK_INACTIVE_OPACITY);
-        for (var i=1; i < _nnodes.length; i++) {
-          link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i-1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i-1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
+        for (var i = 1; i < _nnodes.length; i++) {
+          link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i - 1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i - 1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
           _nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
         }
       } else {
@@ -161,12 +163,11 @@ function buildGraph() {
           } else if (d === l.target) {
             _nodes.push(l.source);
             return LINK_ACTIVE_OPACITY;
-          }
-          else return LINK_INACTIVE_OPACITY;
+          } else return LINK_INACTIVE_OPACITY;
         });
       }
       node.style("opacity", n => _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY);
-      text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block": "none");
+      text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block" : "none");
     });
 
   simulation.on("tick", () => {
@@ -175,29 +176,33 @@ function buildGraph() {
       .attr("y1", d => d.source.y)
       .attr("x2", d => d.target.x)
       .attr("y2", d => d.target.y);
-    
+
     node.attr("transform", d => `translate(${d.x}, ${d.y})`);
-    
+
     text.attr("transform", d => `translate(${d.x}, ${d.y})`);
   });
 
   SVG_EL.appendChild(svg.node());
   ngraph = createGraph();
-  graph.links.map(l => ngraph.addLink(l.source.id, l.target.id, {distance: l.distance}));
+  graph.links.map(l => ngraph.addLink(l.source.id, l.target.id, {
+    distance: l.distance
+  }));
 
   var _time, _timer;
 
   function drag(simulation) {
-  
+
     function dragstarted(event, d) {
       _time = new Date();
       _timer = setTimeout(_ => {
-        var clickEvent = new Event("click", {bubbles: true});
+        var clickEvent = new Event("click", {
+          bubbles: true
+        });
         clickEvent.shiftKey = true;
         event.sourceEvent.target.dispatchEvent(clickEvent);
-        skipNextClick = true;
+        //skipNextClick = true;
       }, LONGPRESS_DURATION);
-      if (!event.active) simulation.alphaTarget(0.01).restart();
+      if (!event.active) simulation.alphaTarget(0.005).restart();
       d.fx = d.x;
       d.fy = d.y;
     }
@@ -211,14 +216,14 @@ function buildGraph() {
       d.fx = event.x;
       d.fy = event.y;
     }
-    
+
     function dragended(event, d) {
       clearTimeout(_timer);
       _timer = null;
       _time = null;
       if (!event.active) simulation.alphaTarget(0);
     }
-    
+
     return d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
@@ -230,7 +235,7 @@ async function search(query) {
   query = query.trim().toLocaleLowerCase();
   try {
     clearGraph();
-    graph = await fetch(window.location.protocol+'//' + NETWORK_DOMAIN + '/s/' + encodeURIComponent(query)).then(response => response.json());
+    graph = await fetch(window.location.protocol + '//' + NETWORK_URL + encodeURIComponent(query)).then(response => response.json());
     buildGraph();
     document.title = "EgoNet · " + query;
   } catch (e) {
@@ -253,9 +258,15 @@ function controller() {
     error: false,
     intro: true,
     error_cb: null,
-    start: function() { this.error = false; this.loading = true; },
-    stop: function() { this.intro = false; this.loading = false; },
-    run: async function(cb) { 
+    start: function () {
+      this.error = false;
+      this.loading = true;
+    },
+    stop: function () {
+      this.intro = false;
+      this.loading = false;
+    },
+    run: async function (cb) {
       if (this.text.trim() !== '') {
         cb && cb();
         window.history.replaceState(null, window.document.title, "/?q=" + encodeURIComponent(this.text));
@@ -264,7 +275,13 @@ function controller() {
         this.stop();
       }
     },
-    clearError: function() { clearTimeout(this.error_cb); this.error_cb = setTimeout(() => {this.error = undefined; this.intro = true;}, 5000)}
+    clearError: function () {
+      clearTimeout(this.error_cb);
+      this.error_cb = setTimeout(() => {
+        this.error = undefined;
+        this.intro = true;
+      }, 5000)
+    }
   }
 }
 
