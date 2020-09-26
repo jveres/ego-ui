@@ -1,4 +1,4 @@
-const DEFAULT_TEXT = "apple";
+const DEFAULT_TEXT = "tofa";
 const NETWORK_URL = "egonet.fly.dev/?d=4&r=11&q=";
 const SVG_EL = document.getElementById('graph');
 
