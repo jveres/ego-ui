@@ -2,10 +2,6 @@
 
 app = "egoweb"
 
-[build]
-  builtin = "static"
-
-
 [[services]]
   internal_port = 8080
   protocol = "tcp"
