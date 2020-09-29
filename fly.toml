@@ -9,7 +9,6 @@ app = "egoweb"
   [services.concurrency]
     hard_limit = 50
     soft_limit = 45
-    # type = "requests"
 
   [[services.ports]]
     handlers = ["http"]
