@@ -1,6 +1,6 @@
-FROM pierrezemb/gostatic
-WORKDIR /srv/http
+FROM joseluisq/static-web-server
+WORKDIR /public
 COPY index.html .
 COPY script.js .
 COPY style.css .
-CMD ["-port","8080"]
+CMD ["--host", "0.0.0.0", "--port","8080", "--root", "/public", "--assets", "."]
