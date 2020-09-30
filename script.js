@@ -122,7 +122,7 @@ function buildGraph() {
     .attr("text-anchor", "middle")
     .attr("dy", d => 2 * nodeSize(d.count) + 2.0)
     .style("font-family", "sans-serif")
-    .style("font-size", d => labelSize(d.count))
+    .style("font-size", d => labelSize(d.count) + "px") // Firefox needs "px"
     .text(d => d.id);
 
   var skipNextClick = false;
