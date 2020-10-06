@@ -9,6 +9,6 @@ Inspired by this artice: https://medium.com/applied-data-science/the-google-vs-t
 
 This is the frontend part, the graph service is available here: https://github.com/jveres/ego-network
 
-Usage: `click` on a node to highlight its connections, `shift+click` visualizes the shortest path to the center node.
+Usage: `Click` on a node to highlight its connections, `Shift+Click` visualizes the shortest path to the center node.
 
 ![Sample graph](/network.png)
