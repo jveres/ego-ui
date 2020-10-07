@@ -94,8 +94,7 @@ body {
   padding: 5px;
 }
 
-#hints,
-svg {
+#hints > svg {
   margin-top: 5px;
 }
 
@@ -188,5 +187,10 @@ sup {
 
   #searchTerm {
     flex-grow: 1;
+  }
+
+  #hints {
+    bottom: 0px;
+    right: 0px;
   }
 }
