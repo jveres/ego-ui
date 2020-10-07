@@ -90,6 +90,7 @@ body {
   opacity: 0.5;
   font-size: 70%;
   font-family: monospace;
+  pointer-events: none;
 }
 
 button,
