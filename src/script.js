@@ -1,3 +1,4 @@
+const DEV = location.protocol === 'file:';
 const DEFAULT_TEXT = "javascript";
 const NETWORK_URL = "egonet.fly.dev/?d=4&r=11&q=";
 const SVG_EL = document.getElementById('graph');
@@ -235,7 +236,7 @@ async function search(query) {
   query = query.trim().toLocaleLowerCase();
   try {
     clearGraph();
-    graph = await fetch(window.location.protocol + '//' + NETWORK_URL + encodeURIComponent(query)).then(response => response.json());
+    graph = await fetch((DEV ? "http://" : window.location.protocol) + '//' + NETWORK_URL + encodeURIComponent(query)).then(response => response.json());
     buildGraph();
     document.title = "EgoNet · " + query;
   } catch (e) {
@@ -269,7 +270,7 @@ function controller() {
     run: async function (cb) {
       if (this.text.trim() !== '') {
         cb && cb();
-        window.history.replaceState(null, window.document.title, "/?q=" + encodeURIComponent(this.text));
+        if (!DEV) window.history.replaceState(null, window.document.title, "/?q=" + encodeURIComponent(this.text));
         this.start();
         this.error = await search(this.text);
         this.stop();
@@ -280,11 +281,11 @@ function controller() {
       this.error_cb = setTimeout(() => {
         this.error = undefined;
         this.intro = true;
-      }, 5000)
+      }, 5000);
     }
   }
 }
 
-if (location.protocol !== 'https:') {
+if (!DEV && location.protocol !== 'https:') {
   location.replace(`https:${location.href.substring(location.protocol.length)}`);
 }

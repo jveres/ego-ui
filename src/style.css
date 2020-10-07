@@ -79,6 +79,19 @@ body {
   margin: 0;
 }
 
+#hints {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px;
+  color: #aaa;
+  opacity: 0.5;
+  font-size: 70%;
+  font-family: monospace;
+}
+
 button,
 svg {
   display: inline-block;
