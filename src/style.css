@@ -88,9 +88,11 @@ body {
   padding: 10px;
   color: #aaa;
   opacity: 0.5;
-  font-size: 70%;
+  font-size: 60%;
   font-family: monospace;
   pointer-events: none;
+  text-align: right;
+  border: #eee solid 1px;
 }
 
 button,
