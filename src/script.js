@@ -1,6 +1,6 @@
 const DEV = location.protocol === 'file:';
 const DEFAULT_TEXT = "javascript";
-const NETWORK_URL = "egonet.fly.dev/?d=4&r=11&q=";
+const NETWORK_URL = "egonet.fly.dev:10001/?d=4&r=11&q=";
 const SVG_EL = document.getElementById('graph');
 
 const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 60]);
