@@ -1,2 +1,2 @@
-FROM static-web-server
+FROM jveres/static-web-server
 COPY src/* ./
