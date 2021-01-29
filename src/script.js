@@ -1,6 +1,7 @@
-const DEV = location.protocol === 'file:';
+const DEV = (location.protocol === 'file:' || window.location.hostname === "localhost");
+const NETWORK_URL = DEV ? "http://localhost:8080/?d=4&r=11&q=" : "https://egonet.fly.dev:10001/?d=4&r=11&q=";
+
 const DEFAULT_TEXT = "javascript";
-const NETWORK_URL = "egonet.fly.dev:10001/?d=4&r=11&q=";
 const SVG_EL = document.getElementById('graph');
 
 const distanceScale = d3.scaleLinear().domain([0, 11]).range([30, 60]);
@@ -102,12 +103,6 @@ function buildGraph() {
     .attr("r", d => nodeSize(d.count))
     .attr("fill", d => nodeColor(d.depth));
 
-  node.filter(d => d.depth === 0)
-    .append("circle")
-    .attr("class", "pulse")
-    .attr("stroke", d => nodeColor(d.depth))
-    .attr("r", d => nodeSize(d.count));
-
   const text = container.append("g")
     .attr("class", "labels")
     .selectAll("g")
@@ -128,48 +123,53 @@ function buildGraph() {
 
   var skipNextClick = false;
 
-  node
-    .on("click", (event, d) => {
-      if (skipNextClick === true) {
-        skipNextClick = false;
-        return;
-      }
-      var _nodes = [d];
-      if (event.shiftKey) {
-        // shortest path
-        var root;
-        node.filter(d => {
-          if (d.depth === 0) {
-            root = d;
-            return true;
-          }
-        });
-        const path = ngraphPath.nba(ngraph, {
-          distance(fromNode, toNode, link) {
-            return link.data.distance;
-          }
-        });
-        _nnodes = path.find(root.id, d.id);
-        link.style('stroke-opacity', LINK_INACTIVE_OPACITY);
-        for (var i = 1; i < _nnodes.length; i++) {
-          link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i - 1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i - 1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
-          _nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
+  node.on("click", (event, d) => {
+    if (skipNextClick === true) {
+      skipNextClick = false;
+      return;
+    }
+    var _nodes = [d];
+    if (event.shiftKey) {
+      // shortest path
+      var root;
+      node.filter(d => {
+        if (d.depth === 0) {
+          root = d;
+          return true;
         }
-      } else {
-        // connected nodes
-        link.style('stroke-opacity', l => {
-          if (d === l.source) {
-            _nodes.push(l.target);
-            return LINK_ACTIVE_OPACITY;
-          } else if (d === l.target) {
-            _nodes.push(l.source);
-            return LINK_ACTIVE_OPACITY;
-          } else return LINK_INACTIVE_OPACITY;
-        });
+      });
+      const path = ngraphPath.nba(ngraph, {
+        distance(fromNode, toNode, link) {
+          return link.data.distance;
+        }
+      });
+      _nnodes = path.find(root.id, d.id);
+      link.style('stroke-opacity', LINK_INACTIVE_OPACITY);
+      for (var i = 1; i < _nnodes.length; i++) {
+        link.filter(l => (l.source.id === _nnodes[i].id && l.target.id === _nnodes[i - 1].id) || (l.target.id === _nnodes[i].id && l.source.id === _nnodes[i - 1].id)).style('stroke-opacity', LINK_ACTIVE_OPACITY);
+        _nodes.push(node.filter(n => n.id === _nnodes[i].id).data()[0]);
       }
-      node.style("opacity", n => _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY);
-      text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block" : "none");
-    });
+    } else {
+      // connected nodes
+      link.style('stroke-opacity', l => {
+        if (d === l.source) {
+          _nodes.push(l.target);
+          return LINK_ACTIVE_OPACITY;
+        } else if (d === l.target) {
+          _nodes.push(l.source);
+          return LINK_ACTIVE_OPACITY;
+        } else return LINK_INACTIVE_OPACITY;
+      });
+    }
+    node.style("opacity", n => _nodes.indexOf(n) !== -1 ? NODE_ACTIVE_OPACITY : NODE_INACTIVE_OPACITY);
+    text.attr("display", t => _nodes.indexOf(t) !== -1 ? "block" : "none");
+  });
+
+  node.filter(d => d.depth === 0)
+    .append("circle")
+    .attr("class", "pulse")
+    .attr("stroke", d => nodeColor(d.depth))
+    .attr("r", d => nodeSize(d.count));
 
   simulation.on("tick", () => {
     link
@@ -236,7 +236,9 @@ async function search(query) {
   query = query.trim().toLocaleLowerCase();
   try {
     clearGraph();
-    graph = await fetch((DEV ? "http://" : window.location.protocol) + '//' + NETWORK_URL + encodeURIComponent(query)).then(response => response.json());
+    graph = await fetch(NETWORK_URL + encodeURIComponent(query))
+      .then(response => response.json())
+      .then(json => JSON.parse(json.graph));
     buildGraph();
     document.title = "EgoNet · " + query;
   } catch (e) {
